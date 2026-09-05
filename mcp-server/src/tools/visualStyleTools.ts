@@ -24,7 +24,8 @@ export const visualStyleToolDefs: Tool[] = [
         networkId: { type: 'string' },
         vpName: {
           type: 'string',
-          description: 'Visual property name (e.g. "nodeBackgroundColor", "edgeLineColor")',
+          description:
+            'Visual property name (e.g. "nodeBackgroundColor", "edgeLineColor")',
         },
         vpValue: { description: 'Default value (e.g. "#CCCCCC", 30)' },
       },
@@ -42,7 +43,10 @@ export const visualStyleToolDefs: Tool[] = [
       properties: {
         networkId: { type: 'string' },
         vpName: { type: 'string', description: 'Visual property name' },
-        attribute: { type: 'string', description: 'Data attribute to map from' },
+        attribute: {
+          type: 'string',
+          description: 'Data attribute to map from',
+        },
         attributeType: {
           type: 'string',
           enum: ['string', 'long', 'integer', 'double', 'boolean'],
@@ -104,7 +108,10 @@ export const visualStyleToolDefs: Tool[] = [
       properties: {
         networkId: { type: 'string' },
         vpName: { type: 'string', description: 'Visual property name' },
-        attribute: { type: 'string', description: 'Data attribute to pass through' },
+        attribute: {
+          type: 'string',
+          description: 'Data attribute to pass through',
+        },
         attributeType: {
           type: 'string',
           enum: ['string', 'long', 'integer', 'double', 'boolean'],

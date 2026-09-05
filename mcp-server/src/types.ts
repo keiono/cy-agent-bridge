@@ -6,10 +6,7 @@
  */
 
 export type BridgeErrorCode =
-  | 'METHOD_NOT_FOUND'
-  | 'API_ERROR'
-  | 'TRANSPORT_ERROR'
-  | 'SHAPING_ERROR'
+  'METHOD_NOT_FOUND' | 'API_ERROR' | 'TRANSPORT_ERROR' | 'SHAPING_ERROR'
 
 export interface BridgeError {
   code: BridgeErrorCode

@@ -99,9 +99,7 @@ export async function handleWorkspaceTool(
       return callApi(page, 'workspace.getCurrentNetworkId')
 
     case 'cytoscape_switch_network':
-      return callApi(page, 'workspace.switchCurrentNetwork', [
-        params.networkId,
-      ])
+      return callApi(page, 'workspace.switchCurrentNetwork', [params.networkId])
 
     case 'cytoscape_set_workspace_name':
       return callApi(page, 'workspace.setWorkspaceName', [params.name])

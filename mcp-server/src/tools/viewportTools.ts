@@ -11,7 +11,8 @@ import type { BridgeResult } from '../types.js'
 export const viewportToolDefs: Tool[] = [
   {
     name: 'cytoscape_fit_network',
-    description: 'Fit the viewport to show all elements. This is the sole mechanism for fitting.',
+    description:
+      'Fit the viewport to show all elements. This is the sole mechanism for fitting.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -77,7 +78,10 @@ export async function handleViewportTool(
     default:
       return {
         success: false,
-        error: { code: 'METHOD_NOT_FOUND', message: `Unknown viewport tool: ${toolName}` },
+        error: {
+          code: 'METHOD_NOT_FOUND',
+          message: `Unknown viewport tool: ${toolName}`,
+        },
       }
   }
 }

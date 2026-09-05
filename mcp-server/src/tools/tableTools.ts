@@ -68,7 +68,13 @@ export const tableToolDefs: Tool[] = [
         },
         defaultValue: { description: 'Default value for existing rows' },
       },
-      required: ['networkId', 'tableType', 'columnName', 'dataType', 'defaultValue'],
+      required: [
+        'networkId',
+        'tableType',
+        'columnName',
+        'dataType',
+        'defaultValue',
+      ],
     },
   },
   {
@@ -359,7 +365,8 @@ export async function handleTableTool(
       try {
         const filePath = sessionFilePath('table', 'tsv')
         fs.writeFileSync(filePath, d.tsvText, 'utf-8')
-        const rowCount = d.tsvText.split('\n').filter((l) => l.trim()).length - 1
+        const rowCount =
+          d.tsvText.split('\n').filter((l) => l.trim()).length - 1
         return { success: true, data: { filePath, rowCount } }
       } catch (e) {
         return {

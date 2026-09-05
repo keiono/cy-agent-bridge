@@ -14,7 +14,7 @@ export const elementToolDefs: Tool[] = [
   // --- CRUD ---
   {
     name: 'cytoscape_get_node',
-    description: 'Get a node\'s attributes and position.',
+    description: "Get a node's attributes and position.",
     inputSchema: {
       type: 'object',
       properties: {
@@ -26,7 +26,7 @@ export const elementToolDefs: Tool[] = [
   },
   {
     name: 'cytoscape_get_edge',
-    description: 'Get an edge\'s source, target, and attributes.',
+    description: "Get an edge's source, target, and attributes.",
     inputSchema: {
       type: 'object',
       properties: {
@@ -38,8 +38,7 @@ export const elementToolDefs: Tool[] = [
   },
   {
     name: 'cytoscape_create_node',
-    description:
-      'Create a node at the given position. Returns { nodeId }.',
+    description: 'Create a node at the given position. Returns { nodeId }.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -61,8 +60,7 @@ export const elementToolDefs: Tool[] = [
   },
   {
     name: 'cytoscape_create_edge',
-    description:
-      'Create an edge between two nodes. Returns { edgeId }.',
+    description: 'Create an edge between two nodes. Returns { edgeId }.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -111,8 +109,7 @@ export const elementToolDefs: Tool[] = [
   },
   {
     name: 'cytoscape_move_edge',
-    description:
-      'Change the source and/or target of an existing edge.',
+    description: 'Change the source and/or target of an existing edge.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -183,8 +180,7 @@ export const elementToolDefs: Tool[] = [
   },
   {
     name: 'cytoscape_get_incomers',
-    description:
-      'Get directed 1-hop upstream neighbors: { nodeIds, edgeIds }.',
+    description: 'Get directed 1-hop upstream neighbors: { nodeIds, edgeIds }.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -249,16 +245,10 @@ export async function handleElementTool(
 ): Promise<BridgeResult<unknown>> {
   switch (toolName) {
     case 'cytoscape_get_node':
-      return callApi(page, 'element.getNode', [
-        params.networkId,
-        params.nodeId,
-      ])
+      return callApi(page, 'element.getNode', [params.networkId, params.nodeId])
 
     case 'cytoscape_get_edge':
-      return callApi(page, 'element.getEdge', [
-        params.networkId,
-        params.edgeId,
-      ])
+      return callApi(page, 'element.getEdge', [params.networkId, params.edgeId])
 
     case 'cytoscape_create_node': {
       const options: Record<string, unknown> = {}

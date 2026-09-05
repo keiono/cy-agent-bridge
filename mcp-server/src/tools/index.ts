@@ -6,30 +6,15 @@ import type { Page } from 'playwright'
 import type { BridgeResult } from '../types.js'
 
 // Phase 1a
-import {
-  handleWorkspaceTool,
-  workspaceToolDefs,
-} from './workspaceTools.js'
-import {
-  handleNetworkTool,
-  networkToolDefs,
-} from './networkTools.js'
+import { handleWorkspaceTool, workspaceToolDefs } from './workspaceTools.js'
+import { handleNetworkTool, networkToolDefs } from './networkTools.js'
 
 // Phase 1b
-import {
-  elementToolDefs,
-  handleElementTool,
-} from './elementTools.js'
-import {
-  handleSelectionTool,
-  selectionToolDefs,
-} from './selectionTools.js'
+import { elementToolDefs, handleElementTool } from './elementTools.js'
+import { handleSelectionTool, selectionToolDefs } from './selectionTools.js'
 
 // Phase 1c
-import {
-  handleTableTool,
-  tableToolDefs,
-} from './tableTools.js'
+import { handleTableTool, tableToolDefs } from './tableTools.js'
 // Phase 1d
 import {
   handleVisualStyleTool,

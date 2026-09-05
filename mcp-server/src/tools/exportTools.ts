@@ -41,7 +41,10 @@ export async function handleExportTool(
   if (toolName !== 'cytoscape_export_network') {
     return {
       success: false,
-      error: { code: 'METHOD_NOT_FOUND', message: `Unknown export tool: ${toolName}` },
+      error: {
+        code: 'METHOD_NOT_FOUND',
+        message: `Unknown export tool: ${toolName}`,
+      },
     }
   }
 

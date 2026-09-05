@@ -37,7 +37,8 @@ async function resolveWsUrl(cdpUrl: string): Promise<string> {
   const res = await fetch(`${cdpUrl}/json/version`)
   const json = (await res.json()) as { webSocketDebuggerUrl?: string }
   const wsUrl = json.webSocketDebuggerUrl
-  if (!wsUrl) throw new Error('No webSocketDebuggerUrl in /json/version response')
+  if (!wsUrl)
+    throw new Error('No webSocketDebuggerUrl in /json/version response')
   // Replace host in WS URL with the host from the user-provided CDP URL
   // This handles the WSL2 case where Chrome reports ws://localhost but we
   // need ws://172.x.x.x
@@ -141,7 +142,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           type: 'text',
           text: JSON.stringify({
             success: false,
-            error: { code: 'TRANSPORT_ERROR', message: 'Not connected to browser' },
+            error: {
+              code: 'TRANSPORT_ERROR',
+              message: 'Not connected to browser',
+            },
           }),
         },
       ],
@@ -160,7 +164,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     } catch (e) {
       return {
         content: [
-          { type: 'text', text: JSON.stringify({ connected: false, error: String(e) }) },
+          {
+            type: 'text',
+            text: JSON.stringify({ connected: false, error: String(e) }),
+          },
         ],
       }
     }

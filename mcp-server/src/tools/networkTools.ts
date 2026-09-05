@@ -82,18 +82,14 @@ export async function handleNetworkTool(
   switch (toolName) {
     case 'cytoscape_create_network_from_edges': {
       // ADR-0006: pin addToWorkspace: true
-      const result = await callApi(
-        page,
-        'network.createNetworkFromEdgeList',
-        [
-          {
-            name: params.name,
-            description: params.description,
-            edgeList: params.edgeList,
-            addToWorkspace: true,
-          },
-        ],
-      )
+      const result = await callApi(page, 'network.createNetworkFromEdgeList', [
+        {
+          name: params.name,
+          description: params.description,
+          edgeList: params.edgeList,
+          addToWorkspace: true,
+        },
+      ])
       if (!result.success) return result
       // Summary shaping: extract key fields
       const d = result.data as Record<string, unknown>

@@ -21,7 +21,8 @@ export const layoutToolDefs: Tool[] = [
         networkId: { type: 'string' },
         algorithmName: {
           type: 'string',
-          description: 'Layout algorithm name (use cytoscape_get_layouts to list)',
+          description:
+            'Layout algorithm name (use cytoscape_get_layouts to list)',
         },
       },
       required: ['networkId'],
@@ -56,7 +57,10 @@ export async function handleLayoutTool(
     default:
       return {
         success: false,
-        error: { code: 'METHOD_NOT_FOUND', message: `Unknown layout tool: ${toolName}` },
+        error: {
+          code: 'METHOD_NOT_FOUND',
+          message: `Unknown layout tool: ${toolName}`,
+        },
       }
   }
 }
