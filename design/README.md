@@ -13,7 +13,7 @@ operations visible inside the application UI.
 | **Status**      | **Proposal — not yet implemented**      |
 | Federation name | `claudeBridge`                          |
 | Dev port        | 6000                                    |
-| App config file | `claude-bridge/src/ClaudeBridgeApp.tsx` |
+| App config file | `src/ClaudeBridgeApp.tsx` |
 | Host API phase  | Phase 1 (all domains) + Phase 2 (Resource Registration) + Phase 3.6 (Graph Traversal) + Event Bus |
 
 > **Reading guide:** This document is a design proposal. Code snippets, file
@@ -131,7 +131,7 @@ display), and subscribes to events via `window.addEventListener`.
 ### Source Files
 
 ```
-claude-bridge/src/
+src/
 ├── index.ts                    Entry point — exports CyApp config
 ├── ClaudeBridgeApp.tsx         CyApp definition
 ├── remotes.d.ts                cyweb/* type declarations (minimal; prefer @cytoscape-web/api-types)
@@ -563,7 +563,7 @@ await page.evaluate(
 ### Source Files
 
 ```
-claude-bridge/mcp-server/
+mcp-server/
 ├── package.json              { deps: @modelcontextprotocol/sdk, playwright }
 ├── server.ts                 Entry: stdio MCP server, browser attach/wait
 ├── callApi.ts                Shared dispatcher (dispatches claude:* events)
@@ -586,7 +586,7 @@ claude-bridge/mcp-server/
   "mcpServers": {
     "cytoscape": {
       "command": "node",
-      "args": ["/path/to/claude-bridge/mcp-server/dist/server.js"],
+      "args": ["/path/to/cy-agent-bridge/mcp-server/dist/server.js"],
       "env": {
         "CYWEB_URL": "http://localhost:5500",
         "CDP_URL": "http://localhost:9222"
@@ -626,8 +626,8 @@ cd cytoscape-web && npm run dev          # localhost:5500
   http://localhost:5500
 
 # Step 3 — start the MF Plugin dev server (panel UI only)
-cd cytoscape-web-app-examples
-npm run dev:claude-bridge                # localhost:6100
+cd cy-agent-bridge
+npm run dev                              # localhost:6100
 
 # Step 4 — start Claude Code (MCP auto-starts the MCP server subprocess)
 claude                                   # cytoscape_* tools are now available
@@ -715,7 +715,7 @@ if it cannot connect to the CDP endpoint.
 ## File Map
 
 ```
-claude-bridge/
+cy-agent-bridge/
 ├── package.json                  MF Plugin package
 │                                 peerDeps: react, react-dom, @mui/material
 ├── vite.config.ts                Module Federation (port 6100, name: claudeBridge)

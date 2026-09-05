@@ -7,7 +7,7 @@
  * Usage:
  *   node dist/server.js [--cdp-url ws://localhost:9222]
  *
- * See design/apps/claude-bridge/README.md for architecture.
+ * See design/README.md for architecture.
  */
 import { Server } from '@modelcontextprotocol/sdk/server/index.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'

@@ -2,7 +2,7 @@
  * Shared dispatcher — single page.evaluate() per API call.
  *
  * Dispatches claude:command before and claude:result/claude:error after.
- * See design/apps/claude-bridge/README.md § Dispatcher Pattern.
+ * See design/README.md § Dispatcher Pattern.
  */
 import type { Page } from 'playwright'
 import type { BridgeResult } from './types.js'

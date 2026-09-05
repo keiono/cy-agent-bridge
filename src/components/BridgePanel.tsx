@@ -5,7 +5,7 @@
  * tab switches (React unmount/remount). Event listeners are registered
  * once at module load time, not inside the component.
  *
- * See design/apps/claude-bridge/adr/0003-panel-as-pure-observer.md
+ * See design/adr/0003-panel-as-pure-observer.md
  */
 import { Box, Button, Tab, Tabs, Typography } from '@mui/material'
 import { useState, useSyncExternalStore } from 'react'

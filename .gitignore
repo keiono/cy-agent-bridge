@@ -1,0 +1,24 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+node_modules
+dist
+*.local
+
+# AI agent settings
+.agents/
+.codex/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.sw?
+
+# App Store submission bundles, written next to package.json by the
+# zip-for-app-store build plugin. Regenerated on every build; deliberately
+# outside dist/.
+*.zip

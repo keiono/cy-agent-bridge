@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  app:
+    name: App — typecheck, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      # The federation container name is what the host loads the app by. A
+      # mismatch fails at load time with a warning nobody sees, so assert it
+      # against the one source of the id here.
+      - name: The built container matches the declared id
+        run: |
+          node -e "
+            const fs = require('fs')
+            const id = JSON.parse(fs.readFileSync('package.json', 'utf8')).cyweb.id
+            const built = JSON.parse(fs.readFileSync('dist/mf-manifest.json', 'utf8')).id
+            if (built !== id) {
+              console.error('::error::built container ' + built + ' != declared ' + id)
+              process.exit(1)
+            }
+            console.log('container ok: ' + built)
+          "
+
+  mcp-server:
+    name: MCP server — build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Its own package, its own lockfile, its own tsc. It never goes through the
+    # bundler, so the app job proves nothing about it.
+    defaults:
+      run:
+        working-directory: mcp-server
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: mcp-server/package-lock.json
+      - run: npm ci
+      - run: npm run build

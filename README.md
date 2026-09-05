@@ -1,9 +1,20 @@
-# claude-bridge — Cytoscape Web MCP Server
+# cy-agent-bridge — Cytoscape Web MCP Server
 
 An MCP (Model Context Protocol) server that connects Claude to a running
 Cytoscape Web instance via Chrome DevTools Protocol (CDP). This enables
 Claude to read and manipulate networks, tables, visual styles, and more
 through natural language.
+
+> Split out of
+> [`cytoscape-web-app-examples`](https://github.com/cytoscape/cytoscape-web-app-examples),
+> where it lived as the `claude-bridge/` workspace. That repository is a set of
+> small, readable App API examples; this is a product with its own MCP server,
+> so it now has its own repository and release cycle. The federation id
+> (`claudeBridge`), the dev port (6100) and the package names are unchanged.
+>
+> The host application is
+> [`cytoscape-web`](https://github.com/cytoscape/cytoscape-web), which serves
+> the app on `localhost:5500` in development.
 
 ## Architecture
 
@@ -11,9 +22,9 @@ through natural language.
 Claude Code ←→ MCP (stdio) ←→ mcp-server ←→ CDP (WebSocket) ←→ Chrome ←→ Cytoscape Web
 ```
 
-- **MF Plugin** (`claude-bridge/src/`): A Cytoscape Web app that shows
+- **MF Plugin** (`src/`): A Cytoscape Web app that shows
   connection status in the right panel.
-- **MCP Server** (`claude-bridge/mcp-server/`): A Node.js process that
+- **MCP Server** (`mcp-server/`): A Node.js process that
   exposes 57 tools to Claude via MCP, executing them against the browser
   through CDP `page.evaluate()`.
 
@@ -90,7 +101,7 @@ Open `http://localhost:5500` in the launched Chrome window.
 ### 3. Build and run the MCP server
 
 ```bash
-cd claude-bridge/mcp-server
+cd mcp-server
 npm install
 npm run build
 node dist/server.js                                     # native Linux/macOS
@@ -114,7 +125,7 @@ Add to your `.claude/settings.json`:
     "cytoscape": {
       "command": "node",
       "args": [
-        "/path/to/claude-bridge/mcp-server/dist/server.js",
+        "/path/to/cy-agent-bridge/mcp-server/dist/server.js",
         "--cdp-url", "http://172.20.112.1:9222"
       ]
     }
@@ -123,6 +134,27 @@ Add to your `.claude/settings.json`:
 ```
 
 > Omit `--cdp-url` on native Linux/macOS (defaults to `http://localhost:9222`).
+
+### 5. Run the app panel (optional)
+
+The MCP server drives the host on its own; the panel is the live log of what it
+sent. It is a Module Federation remote, so the host loads it over HTTP:
+
+```bash
+npm install
+npm run dev          # → http://localhost:6100
+```
+
+The dev server prints an install link. Open it against a host on the same
+origin family (the host only installs a `localhost` app when the host itself is
+on `localhost`):
+
+```
+http://localhost:5500/?installApp=http://localhost:6100/cyweb-app.json
+```
+
+The browser asks for permission the first time. The panel then appears in the
+host's right panel.
 
 ## Available Tools (57)
 
@@ -144,8 +176,8 @@ All tools are prefixed with `cytoscape_` (e.g., `cytoscape_get_workspace`).
 
 ## Design Documents
 
-- [Design Overview](../design/apps/claude-bridge/README.md)
-- [Implementation Plan](../design/apps/claude-bridge/IMPLEMENTATION_PLAN.md)
-- [MCP Tool Signatures](../design/apps/claude-bridge/MCP_TOOLS.md)
-- [Scenarios](../design/apps/claude-bridge/SCENARIOS.md)
-- [ADRs](../design/apps/claude-bridge/adr/)
+- [Design Overview](design/README.md)
+- [Implementation Plan](design/IMPLEMENTATION_PLAN.md)
+- [MCP Tool Signatures](design/MCP_TOOLS.md)
+- [Scenarios](design/SCENARIOS.md)
+- [ADRs](design/adr/)

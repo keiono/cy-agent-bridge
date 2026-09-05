@@ -3,7 +3,7 @@
  *
  * Implements polling-based event forwarding for CyWebEvents.
  * One call = one event. Claude re-calls to get the next event.
- * See design/apps/claude-bridge/README.md § Event Forwarding to Claude.
+ * See design/README.md § Event Forwarding to Claude.
  */
 import type { Tool } from '@modelcontextprotocol/sdk/types.js'
 import type { Page } from 'playwright'

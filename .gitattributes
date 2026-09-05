@@ -1,0 +1,9 @@
+# Line endings are part of the contract, not a local preference. The App Store
+# pins a submission archive by SHA-256 over its exact raw bytes, and Git's own
+# autocrlf would rewrite those bytes on a Windows checkout — a digest that
+# depends on who checked the repository out pins nothing.
+* text=auto eol=lf
+
+# Never touched at all: their bytes ARE the artifact.
+*.zip -text
+*.tgz -text

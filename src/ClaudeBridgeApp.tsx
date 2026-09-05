@@ -5,7 +5,7 @@
  * claude:* custom events dispatched by the MCP server's CDP dispatcher.
  * It does NOT participate in the command execution path.
  *
- * See design/apps/claude-bridge/README.md for architecture details.
+ * See design/README.md for architecture details.
  */
 import { lazy } from 'react'
 import { CyAppWithLifecycle } from 'cyweb/ApiTypes'

@@ -2,7 +2,7 @@
  * Bridge-specific types — distinct from host ApiResult/ApiError.
  *
  * These model transport and dispatch failures, not domain-specific errors.
- * See design/apps/claude-bridge/README.md § Bridge-Specific Types.
+ * See design/README.md § Bridge-Specific Types.
  */
 
 export type BridgeErrorCode =
