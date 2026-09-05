@@ -1,14 +1,20 @@
 name: CI
 
+# BOTH long-lived branches. `development` is the default branch and where the
+# work happens; `main` is the snapshot the repository was split at. Listing only
+# one of them leaves the other unchecked — and listing only `main`, as this file
+# did until the default moved, left every push unchecked.
 on:
   push:
-    branches: [main]
+    branches: [main, development]
   pull_request:
-    branches: [main]
+    branches: [main, development]
 
+# Cancel superseded runs on rapid pushes, but let every push to a long-lived
+# branch run to completion so each merged commit keeps a full CI result.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/development' }}
 
 jobs:
   app:
