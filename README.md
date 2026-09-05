@@ -181,3 +181,11 @@ All tools are prefixed with `cytoscape_` (e.g., `cytoscape_get_workspace`).
 - [MCP Tool Signatures](design/MCP_TOOLS.md)
 - [Scenarios](design/SCENARIOS.md)
 - [ADRs](design/adr/)
+
+Documents above describe the bridge as built. Planned work lives in its own
+subdirectory:
+
+- [Agent Workflow](design/agent-workflow/agent-workflow.md) ·
+  [checklist](design/agent-workflow/agent-workflow-checklist.md) ·
+  [open proposals](design/agent-workflow/agent-workflow-proposals.md) — making
+  the analysis-to-visualisation workflow run, and the bridge vendor-neutral
