@@ -3,7 +3,9 @@
 > Task-level tracking. Mark `[x]` when complete, and run a phase's
 > verification before starting the next one.
 >
-> **Status (9/5/2026): nothing started.** Rev. 4 — third review folded in.
+> **Status (9/5/2026): nothing started.** Rev. 10 — seventh review folded in:
+> per-id verification, projection-based apply, four completion states, byte
+> limits, in-place apply moved out to the proposals.
 >
 > **Phase 1 is a hard prerequisite for everything else.** A file import against
 > a bridge that attaches to the wrong tab, or that calls a signature the host
@@ -114,6 +116,18 @@ selection (§1.2).
 - [ ] No reduced-guarantee modes: a capability that cannot be delivered with
       the same data contract is unsupported
 
+### Browser scope (§13, and webmcp-roadmap.md §3.4)
+
+- [ ] Tool handlers call a **`Transport` interface** — connect, evaluate,
+      subscribe, screenshot — and never import Playwright's `Page`. CDP is the
+      only implementation; the interface exists so P3 can add another without
+      touching a tool
+- [ ] The launch-mode contract test also runs under `firefox.launch()` and
+      `webkit.launch()` as a **non-blocking** job — informational only, never a
+      merge gate
+- [ ] README and error messages say **Chromium-based**, and say Firefox and
+      Safari are unsupported by decision
+
 ### Connection, readiness, rendering (§3.3)
 
 - [ ] Page selection: scan all contexts and pages, restrict to an allowed
@@ -183,6 +197,9 @@ selection (§1.2).
       keys, unmatched rows and existing values
 - [ ] Encoding for tabs, newlines and the `|` list separator, written down and
       shared by the writer and the reader
+- [ ] Join defaults implemented as stated in §5.2: reject duplicate, unknown
+      and mistyped keys **before** sending; partial results only with a named
+      target set; omitted row ≠ explicit `null` on an existing column
 - [ ] **ADR-0009: identity, typing and missing-value contract**
 
 ### Missing is not zero (§5.3)
@@ -191,8 +208,9 @@ selection (§1.2).
       represented — new columns are created for every element with
       `defaultForType`, which is `0` for numeric types
 - [ ] Pre-import validation: keys resolved, duplicated, unknown
-- [ ] Post-import verification: match count, non-default value count against
-      values supplied, plus values read back
+- [ ] Post-import verification decided **per id** — value, type and
+      missing-ness read back for every supplied element; counts (matched,
+      written, defaulted) are diagnostics only, never the pass condition
 - [ ] Fail loudly below a stated match-rate threshold — and note that an
       all-unmatched import still **creates fully-defaulted columns**, so
       "nothing changed" is not the signal
@@ -202,7 +220,12 @@ selection (§1.2).
 - [ ] `cytoscape_import_network_from_file(path, format?, runId)`
 - [ ] `cytoscape_import_table_from_file(path, tableType, keyColumn, columnTypes,
       missingValuePolicy, duplicateKeyPolicy, runId)`
-- [ ] Chunked injection above ~8 MB, reassembled in the page
+- [ ] Chunked injection above ~8 MiB: transfer id, sequence, total size, and
+      a content hash verified in the page **before** import
+- [ ] Byte limits beside the element limits: 64 MiB per artifact, 128 MiB of
+      transfer buffers in the page — unmeasured starting values, verified in
+      this phase; refused before any host change; buffers released on
+      completion, abort and timeout
 - [ ] Keep the inline tools for small payloads
 
 ### Runs and artifacts (§9)
@@ -212,8 +235,9 @@ selection (§1.2).
       interpreter and library versions, parameters, seed
 - [ ] Every import, export and apply tool takes `runId` and appends what it
       knows; the manifest is explicit about what is missing
-- [ ] Run directory outlives the process, separate from the session temp
-      directory
+- [ ] Run directory at `<project>/cyweb-runs/<runId>/`, project set
+      explicitly at startup, **no automatic deletion**; separate from the
+      session temp directory
 - [ ] Manifest carries the id map, graph type and original edge keys (§5.4)
 - [ ] Generalised shaping over 32 KB → `{ filePath, summary }`, with **MCP
       image content exempt**
@@ -233,6 +257,10 @@ selection (§1.2).
       non-default display settings (size lock, arrow colour, display columns)
 - [ ] Until it ships: document what survives, and keep the original CX2 plus
       analysis metadata as separate run-directory files
+- [ ] File a second issue: a **persistence-outcome contract** — did the
+      network's restore data reach IndexedDB — as an `ApiResult`. The
+      scheduler delays writes 300 ms and logs failures, so API success proves
+      nothing about persistence (`persistenceScheduler.ts`)
 
 ### Tests
 
@@ -261,21 +289,41 @@ selection (§1.2).
 
 ### Apply as one operation (§8)
 
-- [ ] The result network is built **from the analysis-input snapshot**, not
-      from live state at apply time
-- [ ] Duplication is a snapshot re-import — `createNetworkFromNodeList` creates
-      a default style and empty attributes and is not a duplicate
-- [ ] In-place path: precondition check (counts, column set, content hash) and
-      a documented way back
-- [ ] `apply_analysis` contract: `runId`, input snapshot, apply mode,
-      verification result, and the state left behind on partial failure
+- [ ] Four references, distinct and named: `datasetSnapshotRef` (local
+      only, never sent whole), `projectionSnapshotRef`, `resultsRef`,
+      `idMappingRef` with aggregate member sets and method (§8.1)
+- [ ] The result network is built **from the projection snapshot** — never
+      from the dataset, never from live state at apply time
+- [ ] `apply_analysis` joins results into a **local copy of the projection**
+      and imports only that CX2; the host TSV importer is not on this path
+- [ ] Apply mode is **new network only** in the initial release; the in-place
+      path is proposals §11 and is not a release condition
+- [ ] `createNetworkFromNodeList` is not a duplicate (default style, empty
+      attributes); "new network" means importing the joined CX2
+- [ ] Snapshots exclude undo history and transient selection state
+- [ ] Completion reported as four states — applied/verified, rendered,
+      persisted, recorded (§8.3); a persistence failure returns the created
+      `networkId` and the state reached
+- [ ] Persistence retry and operation re-execution are **different actions**;
+      the tool never re-creates a network on its own
+- [ ] `apply_analysis` contract: `runId`, the four references, and the
+      verification result with completion states and partial-failure state
 - [ ] **ADR-0010: applying analysis as one verified operation**
 
 ### Events (§8)
 
 - [ ] Buffer scoped by `networkId`, with a monotonic sequence number
+- [ ] Cursor is `(Document UUID, sequence)`; a new UUID per load, no
+      persistent counter
 - [ ] Per-consumer cursor; two waiters do not race for one event
 - [ ] Timeout and cancellation
+- [ ] `EVENT_GAP` on reload or retention loss — never a stale event. Recovery
+      re-checks the watched `networkId` and `projectionId`: re-read that
+      selection if they exist, report their absence if they do not
+- [ ] A rendering wait or screenshot never fits or switches the network on
+      its own (ADR-0006)
+- [ ] Panel marks an operation as **not persisted** when no local recorder
+      was connected at the time
 - [ ] `cytoscape_wait_for_selection(timeoutMs)`
 - [ ] `cytoscape_clear_selection`
 
@@ -299,10 +347,20 @@ selection (§1.2).
 
 ### Verification
 
-- [ ] Select nodes by hand; the agent re-analyses that selection and re-applies
-      the result to a network built from the recorded snapshot
+- [ ] Select nodes by hand; the agent re-analyses that selection and applies
+      the result as a new network built from the recorded projection
 - [ ] A style step failing halfway leaves the user's network untouched
 - [ ] Screenshot shows the styled network, taken after rendering completes
+- [ ] Results mixing all-zero, missing, empty and explicit `null` pass the
+      per-id check — the all-zero column included
+- [ ] A 400k-node dataset displayed as a 3,000-node projection: the page never
+      receives the dataset; each displayed element resolves to its source ids
+- [ ] A super-node selected and re-analysed uses the recorded member set and
+      the recorded analysis scope
+- [ ] Persistence failure after apply is not reported as success; after a
+      reload, a persisted result is restored
+- [ ] Few nodes with enormous attributes are refused by the byte limit before
+      any host change, and the buffers are released
 
 ---
 
@@ -362,8 +420,9 @@ selection (§1.2).
 - [ ] `cytoscape_export_network` gains `format`
 - [ ] `cytoscape_apply_style_recipe` — colour-by / size-by / label-by, discrete
       for categorical, continuous from `get_column_stats` quantiles
-- [ ] The rest of the §1.5 gap: `createNetworkFromNodeList`, and the
-      `nodeGraphics` and `contextMenu` domains
+- [ ] `createNetworkFromNodeList`, `nodeGraphics`, `contextMenu`: **deferred**
+      until a workflow needs them — the workflow tools are the tool set, not
+      the API surface (roadmap §3.1)
 - [ ] `deleteAllNetworks` is **declined**, not deferred — record the reason
       (§7) so it is not rediscovered as an oversight
 

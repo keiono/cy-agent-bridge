@@ -185,7 +185,7 @@ All tools are prefixed with `cytoscape_` (e.g., `cytoscape_get_workspace`).
 Documents above describe the bridge as built. Planned work lives in its own
 subdirectory:
 
-- [Agent Workflow](design/agent-workflow/agent-workflow.md) ·
-  [checklist](design/agent-workflow/agent-workflow-checklist.md) ·
-  [open proposals](design/agent-workflow/agent-workflow-proposals.md) — making
-  the analysis-to-visualisation workflow run, and the bridge vendor-neutral
+- [**Agent Workflow**](design/agent-workflow/) — making the
+  analysis-to-visualisation workflow run, the bridge vendor-neutral, and
+  WebMCP an option where it is available. Four documents; start with the
+  [guide](design/agent-workflow/README.md)

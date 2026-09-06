@@ -1,8 +1,9 @@
 # Open Proposals — Agent Workflow
 
-> Proposals from the third review (9/5/2026) that are **not yet part of the
-> plan**. Each was checked against the code; the finding is separated from the
-> proposal so the two can be judged apart.
+> Proposals that are **not yet part of the plan**. §1–§9 come from the third
+> review (9/5/2026); §10 from the browser-support decision the same day. Each
+> was checked against the code; the finding is separated from the proposal so
+> the two can be judged apart.
 >
 > Three decisions from that review went straight into the plan and are not
 > repeated here: `development` as the only supported host, contract tests in
@@ -19,6 +20,24 @@ accepted.
 **ADR numbers.** The plan reserves 0008–0011 (§2). Any proposal accepted from
 this file takes **0012 onwards**, in acceptance order — so §7's error taxonomy
 is 0012 only if it is accepted first.
+
+**Status of each proposal** (9/5/2026). "Assumed" means
+[webmcp-roadmap.md](webmcp-roadmap.md) builds on it and it is accepted the
+moment the roadmap is; nothing here is scheduled on its own.
+
+| § | Proposal | Status | Lands in |
+| --- | --- | --- | --- |
+| 1 | Tool annotations | **assumed** — roadmap §4.3 | P1a |
+| 2 | Version identifier on `CyWebApi` | open — host | roadmap §5 host list if accepted |
+| 3 | Which API tier a global consumer gets (undo) | **deferred** — to whichever phase introduces in-place apply (§11) | — |
+| 4 | Mutation call journal | **assumed** — roadmap §4.5, plan §8.3 | P2 |
+| 5 | Run directory conventions, MCP resources | location and retention **decided** (plan §9); `run_list` and resources open | P2 |
+| 6 | A defined "rendered" | **superseded** by `viewport.whenRendered` (host, P2); canvas sampling experiment-only | — |
+| 7 | Error taxonomy | **assumed** — roadmap §4.5 | P0 |
+| 8 | `doctor` command | open | P0 if accepted |
+| 9 | Serialising mutations | **assumed** — roadmap §4.5, in the operations layer | P1a |
+| 10 | Local connector for WSL2 | open, unscheduled | — |
+| 11 | In-place apply | **deferred** out of the initial release | — |
 
 ---
 
@@ -116,15 +135,18 @@ from. Merging them would make the manifest a log and the log unreadable.
 > Ordering note: this is a prerequisite for §4, despite coming after it here.
 > The numbering follows review order, not implementation order.
 
-**Finding.** §9 introduces a run directory but says nothing about where it
-lives, how long it is kept, or how the agent finds an earlier one.
+**Finding.** §9 introduces a run directory but originally said nothing about
+where it lives, how long it is kept, or how the agent finds an earlier one.
 
-**Proposal.** Settle a location (an XDG-style data directory, or `./cyweb-runs`
-relative to the working directory — the choice affects whether runs follow the
-project or the user), a retention and cleanup policy, and
-`cytoscape_run_list`. Then expose manifests and outputs through MCP
-**resources**, which the SDK supports: an agent can read a past run without a
-tool call, and the client can show them.
+**Partly decided since** (9/5/2026, plan §9): the location is
+`<project>/cyweb-runs/<runId>/` with the project set explicitly at startup —
+runs follow the project, not the user — and there is **no automatic
+deletion**. What remains open here:
+
+**Proposal.** `cytoscape_run_list`, and a manual cleanup command that never
+runs on its own. Then expose manifests and outputs through MCP **resources**,
+which the SDK supports: an agent can read a past run without a tool call, and
+the client can show them.
 
 **New compatibility axis.** Resources are a capability a client may not
 implement, and §4.4 currently scopes client differences to registration and
@@ -215,7 +237,93 @@ also a §4.1 event-identity question (whose `sessionId` is on the panel entry).
 
 ---
 
+## 10. A page-initiated local connector, for the WSL2 setup 【bridge, later host】
+
+> Recorded when browser support was decided as Chromium-based
+> ([webmcp-roadmap.md §3.4](webmcp-roadmap.md)). This is **not** a
+> multi-browser proposal: the same mechanism would serve Firefox and Safari,
+> and that use is declined. Its motivation here is the setup cost for Chromium
+> users on WSL2.
+
+**Finding.** The README's WSL2 section is five manual steps — launch Chrome
+with `--remote-debugging-address=0.0.0.0`, add a `netsh` portproxy, open a
+firewall rule, find the gateway IP, verify with `curl` — because CDP attach
+runs **from WSL2 to the Windows host**, and that direction is not forwarded.
+The opposite direction is: WSL2 forwards ports it listens on to Windows
+`localhost` by default. A connection that the *page* initiates towards a
+server in WSL2 needs none of the five steps.
+
+**Proposal.** The MCP server listens on a local WebSocket; the App (the host
+itself, after P3) connects to `ws://localhost:<port>`; the in-page operations
+layer executes requests and pushes results and events back. Concretely:
+
+- a WebSocket server in the MCP process, bound to loopback only
+- a pairing token shown by the server and entered once in the panel, plus an
+  `Origin` allowlist on the handshake — any page on the machine can otherwise
+  open the socket and receive the agent's commands
+- reconnect logic in the page, not only in Node
+- screenshots via the renderer's canvas (`toDataURL`), since `page.screenshot`
+  is CDP
+
+**Depends on.** P1's operations layer — the connector is an adapter over it,
+and before P1 every tool takes a `Page`. And an installed App until P3, which
+is the connector's largest constraint compared with CDP's ability to inject
+into a bare host.
+
+**Scope.** Chromium only, `ws://` only. Safari's `wss://` certificate
+requirement is exactly the cost the browser decision declined to carry.
+
+**Conditions the five-step removal does not remove.** From Chrome 147, a
+WebSocket connection from a page to a local address — loopback included —
+triggers a **Local Network Access permission prompt**, and the LNA enterprise
+policies (`LocalNetworkAccessAllowedForUrls`, `…BlockedForUrls`,
+`…RestrictionsTemporaryOptOut`) apply. So the connector needs: the user to
+grant that permission once per origin; a stated behaviour when it is denied;
+WSL's own networking configuration (localhost forwarding can be disabled);
+and a note that an enterprise policy can block it outright. Fewer steps than
+today, not zero.
+
+**Screenshots.** A single canvas's `toDataURL()` is not the displayed view —
+annotations and overlays live outside it. The connector should call the
+host's image-export contract (plan §11.2, proposal 1) rather than read a
+canvas.
+
+**Not decided by this.** Whether the connector *replaces* CDP for interactive
+use on Chromium or sits beside it. CDP keeps two things the connector lacks —
+zero-install against a bare host, and full-page screenshots — so the likely
+shape is both, with the connector preferred when an App is present. That is a
+P2-or-later question.
+
+---
+
+## 11. In-place apply 【bridge, needs host】
+
+> Moved out of plan §8 on 9/5/2026. The initial release applies analysis as a
+> **new network only** (plan §8.2); this is the path that would write results
+> into a network the user already has.
+
+**Finding.** Applying into an existing network is what users will eventually
+ask for — "colour *this* network by the clusters" — and it is the case where
+a partial failure or a concurrent human edit does damage. Three things do not
+exist: a precondition check that the network is unchanged since the analysis
+started (counts, column set, content hash), a rule for what happens when it
+is not, and a way back. `importTableFromTsv` records no undo entry, so
+"undo" is not the way back either (§3).
+
+**Proposal.** When scheduled: a precondition contract, explicit conflict
+rejection (never silent merge), and a restore path — most likely the
+projection snapshot re-imported beside the damaged network rather than a
+generic undo. Depends on §3 being answered by the host, and on the four
+completion states (plan §8.3) so that a partial in-place apply can say what
+it left behind.
+
+---
+
 ## Not carried forward
+
+**Multi-browser transport.** Declined on 9/5/2026 in favour of Chromium-based
+support; see [webmcp-roadmap.md §3.4](webmcp-roadmap.md). The mechanism
+survives as §10 with a different motivation.
 
 **Typing against both contracts.** Superseded: only `development` is
 supported, and the declarations are vendored from a `development` build

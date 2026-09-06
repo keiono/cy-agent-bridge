@@ -4,11 +4,50 @@
 > working demo to a tool an analyst can rely on, and from a Claude-specific
 > tool to one any MCP client drives.
 >
-> **Scope:** this repository, plus **one blocking host dependency** (§11.1).
-> Everything else the host could do better is a proposal (§11.2). The supported
-> host is `cytoscape-web@development` and only that (§1.2); any other build
-> gets a clear refusal rather than best-effort behaviour.
+> **Scope:** this repository, plus the host dependencies listed **per phase**
+> in [webmcp-roadmap.md §5](webmcp-roadmap.md) — §11.1 here is the first and
+> the one that blocks the release. Everything else the host could do better is
+> a proposal (§11.2). The supported host is `cytoscape-web@development` and
+> only that (§1.2); any other build gets a clear refusal rather than
+> best-effort behaviour.
+>
+> **Document roles.** This file holds the unit contracts. The roadmap holds
+> order and dependencies, the checklist holds verifiable work, the proposals
+> hold what is not accepted. A contract an implementer needs is written here,
+> never only referenced.
 
+- Rev. 10 (9/5/2026): Keiichiro ONO and Claude (Fable 5.1) — Seventh review,
+  which found two real defects in this document. **§5.3's verification was
+  wrong**: a count of non-default values fails an analysis whose correct
+  answer is all zeros; pass/fail is now the per-id comparison and counts are
+  diagnostics. **§8 would have pulled the whole dataset into the browser**: it
+  built the result network from the analysis-input snapshot, which at 400k
+  nodes is exactly what the projection exists to avoid; the result is now
+  built from the *projection* snapshot, with four named artifact references.
+  Also: the in-place apply path leaves this plan for the proposals (initial
+  release is new-network only); completion is four separate states — applied,
+  rendered, persisted, recorded — because the host's persistence scheduler
+  delays writes by 300 ms and logs failures rather than surfacing them
+  (`persistenceScheduler.ts`); byte limits join element limits (§6); the
+  event cursor is `(Document UUID, sequence)`; `EVENT_GAP` recovery re-checks
+  the network it was watching; and the "both red" cell of §3.5 no longer
+  claims to know the cause.
+- Rev. 9 (9/5/2026): Keiichiro ONO and Claude (Fable 5.1) — Details carried
+  over from the external WebMCP plan where they sharpen a contract already
+  here: join defaults that reject before anything reaches the host (§5.2),
+  GraphML that never guesses (§5.4), transfer verification fields (§6),
+  `apply_analysis` as a local join into a snapshot copy rather than a TSV
+  import (§8), event-gap recovery and no implicit fit or network switch (§8),
+  and the run directory **decided** as `<project>/cyweb-runs/<runId>/` with
+  no automatic deletion (§9).
+- Rev. 8 (9/5/2026): Keiichiro ONO and Claude (Fable 5.1) — **Browser
+  support decided: Chromium-based only** (§2, §13). The reasoning lives in
+  [webmcp-roadmap.md §3.4](webmcp-roadmap.md); what lands here is the decision
+  and its two cheap consequences for Phase 1: tool handlers call a `Transport`
+  interface rather than a Playwright `Page`, and the launch-mode contract test
+  also runs on Firefox and WebKit as a non-blocking job. The page-initiated
+  local connector that would have served other browsers is kept as a proposal,
+  motivated by the WSL2 setup instead.
 - Rev. 7 (9/5/2026): Keiichiro ONO and Claude (Opus 5) — Sixth review, three
   clarifications and one thing worth recording. Sharing one host pin between
   the drift check and the contract test made a lone failure ambiguous, so §3.5
@@ -196,6 +235,7 @@ Missing from the bridge but present on `development`: `visualStyle.getStyles` /
 | Renaming | **Staged.** Display name, packages and events first; the federation id later, with a documented reinstall (§4.1) |
 | Distribution | Server on **npm + `npx`**; panel on **GitHub Pages** (§4.2, §4.4) |
 | Transport | **Attach for interactive use, launch mode for CI contract tests** (§3.5). Streamable HTTP stays out (§13) |
+| Browsers | **Chromium-based only** — Chrome, Edge, Brave and the rest. Firefox and Safari are unsupported by decision, not by omission (§13) |
 
 ADRs to write alongside 0001–0007: the contract strategy (§3), the identity,
 typing and missing-value contract (§5), staged renaming with event identity
@@ -352,8 +392,9 @@ ambiguous; the pair is not:
 | green | green | Nothing. The code, the declarations and the host at the pin agree |
 | green | **red** | The **bridge code**. Types match the host, so this is a value-level assumption `tsc` cannot see — which is the class of bug §1.2 is made of |
 | **red** | green | The **vendored copy** is stale, or the pin moved without regenerating. Run the refresh script |
-| **red** | **red** | The **pin** moved to a host the code has not caught up with |
+| **red** | **red** | Start with the pin — it usually moved — but this cell does not prove it: a host regression at the pin plus a stale vendored copy looks identical |
 
+This is a **diagnostic table** — where to look first — not a table of causes.
 Neither check is meaningful alone, which is the argument for running both on
 every push rather than making the contract test optional.
 
@@ -470,6 +511,18 @@ existing values.
 `table.importTableFromTsv` resolves a custom key by scanning existing rows, and
 when a key value repeats it writes to **every** matching element.
 
+**The defaults**, so the policy fields have a known starting point:
+
+- join on the element's stable id
+- duplicate keys, unknown keys and type mismatches are rejected **before**
+  anything is sent to the host — not reported afterwards
+- a partial result is accepted only when it names its target set
+- in a new result column, an element with no value is **missing**; when
+  updating an existing column, an omitted row and an explicit `null` are
+  different things and are kept different
+- verification compares value, type and missing-ness **per id**, never a
+  non-zero count
+
 **Encoding must be explicit**, because TSV has no escaping of its own: tabs and
 newlines inside values, and `|` as the list separator, need a stated encoding
 on both sides. The bridge owns the writer and the reader, so this is a decision
@@ -487,8 +540,11 @@ rather than silently coerced, so the remaining ambiguity is exactly the one
 above: a defaulted cell and a real zero look the same.
 
 So the contract states, per column, how **missing**, **empty string** and
-**zero** are each represented, and the tool verifies afterwards that the count
-of non-default values matches the count of values supplied.
+**zero** are each represented. **Pass or fail is decided per id**: for every
+element the tool supplied a value for, the value, type and missing-ness read
+back must match. Counts — rows matched, cells written, cells defaulted — are
+**diagnostics only**. A count of non-default values cannot be the test: an
+analysis whose correct answer is zero everywhere would fail it.
 
 **Correction to Rev. 2:** an import where every key missed is *not* a no-op.
 Columns are created before the row loop, so the network gains fully-defaulted
@@ -500,7 +556,10 @@ absence of change.
 Directedness, and whether the original was a multigraph with meaningful edge
 keys, cannot be recovered from a CX2 document — the host does not store them.
 So the converter's input is **CX2 + the run manifest**, not CX2 alone: graph
-type, original edge keys and id types come from the manifest (§9).
+type, original edge keys and id types come from the manifest (§9). When the
+manifest does not say, the converter **does not guess** — it fails, or marks
+the property unknown in the output. SIF is a lossy derived format and is
+labelled as one.
 
 NetworkX's `read_graphml` picks a graph class and an edge-key treatment from
 the file, so the acceptance test asserts on the graph **type**, on edge keys
@@ -517,8 +576,20 @@ With §5 settled, transfer is mechanical. Reusing `sessionFilePath()`:
   the §5.2 and §5.3 fields are arguments, not conventions
 
 The server reads bytes in Node and passes them to `page.evaluate` as an
-argument; the model sees a path. Inputs above ~8 MB are injected in chunks and
-reassembled in the page. The existing inline tools stay for small data.
+argument; the model sees a path. Inputs above ~8 MiB are injected in chunks
+carrying a transfer id, a sequence number and the total size; the page
+verifies the reassembled content hash **before** importing anything. Chunking
+solves the message-size problem only — it does not reduce what the page must
+hold in memory to reassemble and parse.
+
+**Element limits do not bound memory; byte limits do.** A projection under
+the node and edge limits (roadmap §4.6) can still carry huge string, list or
+image attributes. So two further limits, stated as **unmeasured starting
+values to be verified in P2**: **64 MiB per artifact**, and **128 MiB** for
+the total of transfer buffers waiting in the page. Exceeding either is refused
+**before** anything changes on the host, and buffers are released on
+completion, abort and timeout alike. The existing inline tools stay for small
+data.
 
 ---
 
@@ -561,30 +632,90 @@ decision, and this is where it is recorded.
 A style recipe is several API calls, so a failure halfway leaves a partly
 styled network.
 
-**Which network gets duplicated matters.** Duplicating live state at apply time
-attaches results computed minutes ago to a network the user may have edited
-since. The result network is therefore built **from the snapshot that was the
-analysis input**, recorded in the run directory at export time.
+### 8.1 Four references, not one snapshot
 
-Note that `createNetworkFromNodeList` is *not* a duplication primitive: it
-creates a fresh default visual style and empty network attributes. Duplication
-means re-importing the snapshot CX2 — with the §11.1 caveat about what a CX2
-round trip currently preserves.
+Rev. 9 said the result network is built "from the snapshot that was the
+analysis input". For a 400k-node dataset that instruction imports 400k nodes
+into the browser — the thing the projection (roadmap §4.6) exists to prevent.
+The apply operation works on four distinct references:
 
-**In-place path**, when that is what the user wants, requires a precondition
-check that the network has not changed since the analysis started (node and
-edge counts, column set, a content hash) and a documented way back.
+| Reference | What it is | Where it lives |
+| --- | --- | --- |
+| `datasetSnapshotRef` | the data that was analysed | local only; never sent to the page as a whole |
+| `projectionSnapshotRef` | the sub- or aggregated graph chosen for display | local; the only thing that becomes a network |
+| `resultsRef` | the typed, nullable analysis results | local |
+| `idMappingRef` | source ↔ analysis ↔ projection ↔ host ids, plus aggregate member sets and the aggregation method | local, and referenced from the run manifest |
 
-**One tool, one contract.** `apply_analysis` (or the import tools extended)
-takes `runId`, the input snapshot, the apply mode, and returns the verification
-result — match rate, values read back, and the state left behind if it failed
-part way. That is what makes verification non-optional rather than something
-the agent may skip.
+`apply_analysis` joins `resultsRef` into a **local copy of the projection
+snapshot** and imports **only that CX2** as a new network. This keeps the
+host's TSV importer — and its `defaultForType` zeros — off the main path; the
+TSV tools remain a convenience with their limits stated. A small dataset may be
+its own projection, under the same display limits. Snapshots exclude undo
+history and transient selection state; those are session state, not analysis
+input.
 
-**Events for the human round trip.** Scope by `networkId`, a monotonic sequence
-number, a per-consumer cursor, timeout and cancellation. Two waiters must not
-race for one event, and a consumer that reconnects must be able to say where it
-left off.
+**Aggregates are not an id translation.** A super-node maps to a member *set*
+and a method, both recorded in `idMappingRef`, so a user's click on it can be
+turned back into the source elements it stands for.
+
+### 8.2 The initial apply mode is new-network only
+
+Duplicating live state at apply time would attach results computed minutes
+ago to a network the user has edited since; applying in place would need
+preconditions, conflict rejection and a way back. The initial release does
+neither: `apply_analysis` **always creates a new network** from the
+projection snapshot. The in-place path, with the precondition check it
+requires, is [proposals §11](agent-workflow-proposals.md) and is not a release
+condition.
+
+`createNetworkFromNodeList` is *not* a duplication primitive — it creates a
+fresh default style and empty network attributes — so "new network" means
+importing the joined CX2, with the §11.1 caveat about what a round trip
+currently preserves.
+
+### 8.3 Completion is four states, not one
+
+The host's persistence scheduler (`src/data/hooks/stores/persistenceScheduler.ts`)
+defers IndexedDB writes by `WRITE_DELAY_MS = 300` and, when a write fails,
+logs it and moves on. An `ApiResult` success — or the resolution of
+`flushPendingWrites()` — therefore proves that the store changed, **not** that
+the change was saved. The operation reports each of these separately:
+
+| State | What it means, and how it is checked |
+| --- | --- |
+| **applied / verified** | the target network holds the right values — read back per id (§5.3) |
+| **rendered** | the requested view has been drawn — only for operations that asked for display, via the host's rendering-wait contract |
+| **persisted** | the host-side data needed to restore the network was written successfully — needs a public persistence-outcome contract from the host (roadmap §5, P2); never a fixed-time wait |
+| **recorded** | the result and the operation record are in the local run |
+
+A persistence failure returns the created `networkId` and the state reached.
+Creating the network again would duplicate it, so **retrying persistence and
+re-executing the operation are different actions**, and the tool offers the
+first, never the second. A rendering wait or a screenshot never fits the view
+or switches the current network on its own (ADR-0006).
+
+### 8.4 One tool, one contract
+
+`apply_analysis` takes `runId`, the four references above, and returns the
+verification result — per-id comparison, the four completion states, and the
+state left behind if it failed part way. That is what makes verification
+non-optional rather than something the agent may skip.
+
+### 8.5 Events for the human round trip
+
+Scope by `networkId`, a monotonic sequence number, a per-consumer cursor,
+timeout and cancellation. Two waiters must not race for one event, and a
+consumer that reconnects must be able to say where it left off. The cursor is
+**`(Document UUID, sequence)`** — a fresh UUID per document load, so there is
+no persistent counter to keep and a reload can never be mistaken for a
+continuation.
+
+When history is lost — a reload, or the retention limit — the tool returns
+`EVENT_GAP`, never a stale event. Recovery is **not** simply "read the current
+selection": the user may have switched networks in the meantime. The consumer
+re-checks the `networkId` and `projectionId` it was watching; if they still
+exist, it re-reads that selection as a fresh snapshot, and if they are gone,
+that is the answer it returns.
 
 ---
 
@@ -598,6 +729,11 @@ snapshot they came from, the analysis script, environment and library versions,
 parameters and random seed, the id map (§5.1), graph type and edge keys (§5.4),
 result tables, style settings, and outputs.
 
+**Where runs live — decided.** `<project>/cyweb-runs/<runId>/`, with the
+project set explicitly at startup and preferred over any inferred location.
+Nothing is deleted automatically; a run outlives the process, the session and
+the day.
+
 **The bridge cannot collect most of that by itself** — Python runs under the
 agent, outside this process. So runs are explicit:
 
@@ -608,7 +744,10 @@ agent, outside this process. So runs are explicit:
 
 An unregistered run is still valid; the manifest then records what it has and
 is explicit about what is missing. Reproducibility is a property of what the
-agent chose to record, and the manifest should not pretend otherwise.
+agent chose to record, and the manifest should not pretend otherwise. The same
+honesty applies in the other direction: an operation performed in the browser
+while no local recorder is connected is **not** shown as persisted to a run,
+because it was not.
 
 ### 9.1 Result shaping, corrected
 
@@ -669,6 +808,10 @@ descriptions, which is what an agent reads without being asked.
 ---
 
 ## 11. Host dependencies
+
+The complete list, ordered by the phase that needs each item, is
+[webmcp-roadmap.md §5](webmcp-roadmap.md). This section keeps the one that
+blocks the release, and the proposals.
 
 ### 11.1 Blocking: CX2 does not round-trip through the App API
 
@@ -735,6 +878,18 @@ wrong tab, or that cannot tell which contract it is talking to, proves nothing.
   launched browser is a separate question from running tests.
 - **Streamable HTTP transport.** The SDK (1.27.1) implements it; the missing
   part is the authentication and trust boundary, which deserves its own design.
+- **Firefox and Safari.** `connectOverCDP` exists only on
+  `playwright.chromium`; Firefox removed CDP in version 141, and Safari's
+  `safaridriver` sessions are isolated from the user's browsing by design. The
+  one route that would serve both — a page-initiated local connector — was
+  weighed against desktop share (the Chromium family is above 80%), against
+  Safari's permanent `wss://` certificate burden, and against the P2 delay it
+  would cause, and declined. See
+  [webmcp-roadmap.md §3.4](webmcp-roadmap.md). Two things are kept so this
+  can be reopened at P3 without a rewrite: the tool layer talks to a
+  `Transport` interface, not a `Page`; and the contract test runs on Firefox
+  and WebKit as a non-blocking job. The connector itself is
+  [proposals §10](agent-workflow-proposals.md), for the WSL2 setup.
 
 ---
 
