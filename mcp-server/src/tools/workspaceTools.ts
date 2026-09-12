@@ -75,7 +75,7 @@ export async function handleWorkspaceTool(
       return callApi(page, 'workspace.getWorkspaceInfo')
 
     case 'cytoscape_get_networks':
-      return callApi(page, 'workspace.getNetworkList')
+      return callApi(page, 'workspace.getNetworks')
 
     case 'cytoscape_get_network_summary': {
       // Summary shaping: extract key fields, omit full cyNetwork

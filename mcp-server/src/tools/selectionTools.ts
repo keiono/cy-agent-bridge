@@ -52,13 +52,18 @@ export const selectionToolDefs: Tool[] = [
       type: 'object',
       properties: {
         networkId: { type: 'string' },
-        ids: {
+        nodeIds: {
           type: 'array',
           items: { type: 'string' },
-          description: 'Node or edge IDs to add to selection',
+          description: 'Node IDs to add to the selection (default: [])',
+        },
+        edgeIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Edge IDs to add to the selection (default: [])',
         },
       },
-      required: ['networkId', 'ids'],
+      required: ['networkId'],
     },
   },
   {
@@ -68,13 +73,18 @@ export const selectionToolDefs: Tool[] = [
       type: 'object',
       properties: {
         networkId: { type: 'string' },
-        ids: {
+        nodeIds: {
           type: 'array',
           items: { type: 'string' },
-          description: 'Node or edge IDs to remove from selection',
+          description: 'Node IDs to remove from the selection (default: [])',
+        },
+        edgeIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Edge IDs to remove from the selection (default: [])',
         },
       },
-      required: ['networkId', 'ids'],
+      required: ['networkId'],
     },
   },
   {
@@ -85,13 +95,18 @@ export const selectionToolDefs: Tool[] = [
       type: 'object',
       properties: {
         networkId: { type: 'string' },
-        ids: {
+        nodeIds: {
           type: 'array',
           items: { type: 'string' },
-          description: 'Node or edge IDs to toggle',
+          description: 'Node IDs to toggle (default: [])',
+        },
+        edgeIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Edge IDs to toggle (default: [])',
         },
       },
-      required: ['networkId', 'ids'],
+      required: ['networkId'],
     },
   },
 ]
@@ -117,19 +132,22 @@ export async function handleSelectionTool(
     case 'cytoscape_add_to_selection':
       return callApi(page, 'selection.additiveSelect', [
         params.networkId,
-        params.ids,
+        (params.nodeIds as string[]) ?? [],
+        (params.edgeIds as string[]) ?? [],
       ])
 
     case 'cytoscape_remove_from_selection':
-      return callApi(page, 'selection.additiveUnselect', [
+      return callApi(page, 'selection.additiveDeselect', [
         params.networkId,
-        params.ids,
+        (params.nodeIds as string[]) ?? [],
+        (params.edgeIds as string[]) ?? [],
       ])
 
     case 'cytoscape_toggle_selection':
       return callApi(page, 'selection.toggleSelected', [
         params.networkId,
-        params.ids,
+        (params.nodeIds as string[]) ?? [],
+        (params.edgeIds as string[]) ?? [],
       ])
 
     default:

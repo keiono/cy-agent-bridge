@@ -312,7 +312,7 @@ export async function handleTableTool(
       ])
 
     case 'cytoscape_rename_column':
-      return callApi(page, 'table.setColumnName', [
+      return callApi(page, 'table.renameColumn', [
         params.networkId,
         params.tableType,
         params.currentName,
