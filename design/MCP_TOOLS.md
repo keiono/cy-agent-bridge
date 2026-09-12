@@ -16,7 +16,7 @@ See `src/app-api/core/*.ts` in `cytoscape-web` for canonical type definitions.
 | MCP tool                        | `window.CyWebApi` call                      | Notes                                                           |
 | ------------------------------- | ------------------------------------------- | --------------------------------------------------------------- |
 | `cytoscape_get_workspace`       | `workspace.getWorkspaceInfo()`              | Returns `{ workspaceId, name, currentNetworkId, networkCount }` |
-| `cytoscape_get_networks`        | `workspace.getNetworkList()`                | Summary list of all networks in the workspace                   |
+| `cytoscape_get_networks`        | `workspace.getNetworks()`                   | Summary list of all networks in the workspace                   |
 | `cytoscape_get_network_summary` | `workspace.getNetworkSummary(networkId)`    | Single network metadata                                         |
 | `cytoscape_get_current_network` | `workspace.getCurrentNetworkId()`           | Returns `{ networkId }`                                         |
 | `cytoscape_switch_network`      | `workspace.switchCurrentNetwork(networkId)` | Changes the active network                                      |
@@ -67,9 +67,9 @@ before deciding on operations.
 | --------------------------------- | -------------------------------------------------------- | ------------------------------------------ |
 | `cytoscape_get_selection`         | `selection.getSelection(networkId)`                      | Returns `{ selectedNodes, selectedEdges }` |
 | `cytoscape_select`                | `selection.exclusiveSelect(networkId, nodeIds, edgeIds)` | Replaces current selection                 |
-| `cytoscape_add_to_selection`      | `selection.additiveSelect(networkId, ids)`               | Adds to current selection                  |
-| `cytoscape_remove_from_selection` | `selection.additiveUnselect(networkId, ids)`             | Removes from current selection             |
-| `cytoscape_toggle_selection`      | `selection.toggleSelected(networkId, ids)`               | Toggles each element                       |
+| `cytoscape_add_to_selection`      | `selection.additiveSelect(networkId, nodeIds, edgeIds)`  | Adds to current selection                  |
+| `cytoscape_remove_from_selection` | `selection.additiveDeselect(networkId, nodeIds, edgeIds)` | Removes from current selection             |
+| `cytoscape_toggle_selection`      | `selection.toggleSelected(networkId, nodeIds, edgeIds)`  | Toggles each element                       |
 
 **Table (data attributes)**
 
@@ -82,7 +82,7 @@ before deciding on operations.
 | `cytoscape_set_values`    | `table.setValues(networkId, tableType, cellEdits: CellEdit[])`                                 | Bulk write of `{id, column, value}[]` — one column across many elements     |
 | `cytoscape_edit_rows`     | `table.editRows(networkId, tableType, rows: Record<IdType, Record<AttributeName, ValueType>>)` | **Bulk write of multiple attributes across many elements in a single call** |
 | `cytoscape_delete_column` | `table.deleteColumn(networkId, tableType, columnName)`                                         | Removes column and all its values                                           |
-| `cytoscape_rename_column` | `table.setColumnName(networkId, tableType, currentName, newName)`                              | Renames an existing column                                                  |
+| `cytoscape_rename_column` | `table.renameColumn(networkId, tableType, currentName, newName)`                               | Renames an existing column                                                  |
 | `cytoscape_apply_value`   | `table.applyValueToElements(networkId, tableType, columnName, value, elementIds?)`             | Sets one value on many elements; omit `elementIds` for all                  |
 
 **Table (TSV I/O — bulk transfer)**
@@ -112,9 +112,9 @@ data-driven, persistent, and editable through the Cytoscape Web UI.
 | -------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | `cytoscape_set_default_style`          | `visualStyle.setDefault(networkId, vpName, vpValue)`                                                        | Fallback value when no mapping or bypass applies                              |
 | `cytoscape_create_discrete_mapping`    | `visualStyle.createDiscreteMapping(networkId, vpName, attribute, attributeType)`                            | Maps categorical attribute values → visual property (e.g. cluster ID → color) |
-| `cytoscape_create_continuous_mapping`  | `visualStyle.createContinuousMapping(networkId, vpName, vpType, attribute, attributeValues, attributeType)` | Maps numeric range → visual property (e.g. score → node size)                 |
+| `cytoscape_create_continuous_mapping`  | `visualStyle.createContinuousMapping(networkId, vpName, { vpType, attribute, attributeValues, attributeType })` | Maps numeric range → visual property (e.g. score → node size)                 |
 | `cytoscape_create_passthrough_mapping` | `visualStyle.createPassthroughMapping(networkId, vpName, attribute, attributeType)`                         | Uses attribute value directly (e.g. `name` → node label)                      |
-| `cytoscape_remove_mapping`             | `visualStyle.removeMapping(networkId, vpName)`                                                              | Removes mapping; falls back to default                                        |
+| `cytoscape_remove_mapping`             | `visualStyle.deleteMapping(networkId, vpName)`                                                              | Removes mapping; falls back to default                                        |
 
 **Visual Style — bypass (exception use only)**
 

@@ -48,15 +48,15 @@ and `tsc` build; the app under `src/` goes through Vite.
 Straight rewrites to the `development` contract — no adapters, no variant
 selection (§1.2).
 
-- [ ] `visualStyleTools.ts`: `createContinuousMapping` takes
+- [x] `visualStyleTools.ts`: `createContinuousMapping` takes
       `(networkId, vpName, options)`, not six positional arguments
-- [ ] `selectionTools.ts`: `additiveSelect`, `toggleSelected` take
+- [x] `selectionTools.ts`: `additiveSelect`, `toggleSelected` take
       `(networkId, nodeIds, edgeIds)`, not a single `ids` array
-- [ ] `selectionTools.ts`: `additiveUnselect` → `additiveDeselect`, with the
+- [x] `selectionTools.ts`: `additiveUnselect` → `additiveDeselect`, with the
       same argument split
-- [ ] `workspaceTools.ts`: `getNetworkList` → `getNetworks`
-- [ ] `visualStyleTools.ts`: `removeMapping` → `deleteMapping`
-- [ ] `tableTools.ts`: `setColumnName` → `renameColumn`
+- [x] `workspaceTools.ts`: `getNetworkList` → `getNetworks`
+- [x] `visualStyleTools.ts`: `removeMapping` → `deleteMapping`
+- [x] `tableTools.ts`: `setColumnName` → `renameColumn`
 - [ ] `networkTools.ts`: read counts from where the host puts them; stop
       shipping the whole `cyNetwork` across CDP only to discard it
 

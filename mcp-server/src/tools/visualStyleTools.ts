@@ -202,10 +202,12 @@ export async function handleVisualStyleTool(
       return callApi(page, 'visualStyle.createContinuousMapping', [
         params.networkId,
         params.vpName,
-        params.vpType,
-        params.attribute,
-        params.attributeValues,
-        params.attributeType,
+        {
+          vpType: params.vpType,
+          attribute: params.attribute,
+          attributeValues: params.attributeValues,
+          attributeType: params.attributeType,
+        },
       ])
 
     case 'cytoscape_create_passthrough_mapping':
@@ -217,7 +219,7 @@ export async function handleVisualStyleTool(
       ])
 
     case 'cytoscape_remove_mapping':
-      return callApi(page, 'visualStyle.removeMapping', [
+      return callApi(page, 'visualStyle.deleteMapping', [
         params.networkId,
         params.vpName,
       ])
